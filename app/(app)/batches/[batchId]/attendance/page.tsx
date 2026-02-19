@@ -36,11 +36,18 @@ export default async function BatchAttendancePage({
     redirect("/batches");
   }
 
-  const { data: students } = await supabase
+  const { data: enrollments } = await supabase
     .from("batch_enrollments")
-    .select("student:students(id, first_name, last_name)")
+    .select("student_id")
     .eq("batch_id", batch.id)
     .is("end_date", null);
+
+  const studentIds = enrollments?.map((e) => e.student_id) ?? [];
+
+  const { data: students } = await supabase
+    .from("students")
+    .select("id, first_name, last_name")
+    .in("id", studentIds);
 
   const { data: records } = await supabase
     .from("attendance_records")
@@ -49,10 +56,10 @@ export default async function BatchAttendancePage({
     .eq("date", date);
 
   const normalizedStudents =
-    students?.map((row) => ({
-      id: row.student.id,
-      first_name: row.student.first_name,
-      last_name: row.student.last_name
+    students?.map((s) => ({
+      id: s.id,
+      first_name: s.first_name,
+      last_name: s.last_name
     })) ?? [];
 
   return (
