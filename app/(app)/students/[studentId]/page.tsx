@@ -32,10 +32,18 @@ export default async function StudentDetailPage({ params }: Props) {
 
   const { data: enrollment } = await supabase
     .from("batch_enrollments")
-    .select("batch:batches(id, name)")
+    .select("batch_id")
     .eq("student_id", student.id)
     .is("end_date", null)
     .maybeSingle();
+
+  const { data: batch } = enrollment?.batch_id
+    ? await supabase
+        .from("batches")
+        .select("name")
+        .eq("id", enrollment.batch_id)
+        .maybeSingle()
+    : { data: null };
 
   const { data: attendanceSummary } = await supabase
     .from("student_attendance_summary")
@@ -58,7 +66,7 @@ export default async function StudentDetailPage({ params }: Props) {
           <p className="text-sm font-medium">{student.current_belt}</p>
           <p className="text-xs text-slate-400 mt-2">Current batch</p>
           <p className="text-sm font-medium">
-            {enrollment?.batch?.name ?? "Not assigned"}
+            {batch?.name ?? "Not assigned"}
           </p>
           <p className="text-xs text-slate-400 mt-2">Joined</p>
           <p className="text-sm font-medium">

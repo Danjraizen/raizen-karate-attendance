@@ -22,21 +22,27 @@ export default async function BatchesPage() {
 
   const { data: batchLinks } = await supabase
     .from("batch_instructors")
-    .select("batch:batches(id, name, days_of_week, start_time, end_time, is_active)")
+    .select("batch_id")
     .eq("instructor_id", instructor?.id ?? "")
     .order("created_at", { ascending: true });
 
+  const batchIds = batchLinks?.map((bl) => bl.batch_id) ?? [];
+
+  const { data: batchesData } = await supabase
+    .from("batches")
+    .select("id, name, days_of_week, start_time, end_time")
+    .in("id", batchIds)
+    .eq("is_active", true)
+    .order("name");
+
   const batches =
-    batchLinks
-      ?.map((x) => x.batch)
-      .filter((b) => b?.is_active)
-      .map((b) => ({
-        id: b!.id,
-        name: b!.name,
-        days_of_week: b!.days_of_week,
-        start_time: b!.start_time,
-        end_time: b!.end_time
-      })) ?? [];
+    batchesData?.map((b) => ({
+      id: b.id,
+      name: b.name,
+      days_of_week: b.days_of_week,
+      start_time: b.start_time,
+      end_time: b.end_time
+    })) ?? [];
 
   return (
     <>
